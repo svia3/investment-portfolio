@@ -7,13 +7,20 @@ import yfinance as yf
 from datetime import datetime, timedelta
 
 
-def get_ticker_news(ticker, max_articles=3):
+def get_ticker_news(ticker, max_articles=2):
     """Get recent news for a ticker"""
     try:
         t = yf.Ticker(ticker)
-        news = t.news[:max_articles] if hasattr(t, 'news') and t.news else []
-        return [{"title": n.get("title", ""), "link": n.get("link", "")} for n in news]
-    except:
+        if not hasattr(t, 'news') or not t.news:
+            return []
+        news_items = []
+        for n in t.news[:max_articles]:
+            title = n.get("title", "").strip()
+            link = n.get("link", "").strip()
+            if title and link:  # Only include if both exist
+                news_items.append({"title": title, "link": link})
+        return news_items
+    except Exception as e:
         return []
 
 

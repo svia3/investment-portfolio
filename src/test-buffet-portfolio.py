@@ -452,6 +452,7 @@ def send_report_email(selected_file, universe_file, summary_file=None):
     s3.upload_file(universe_file, bucket, universe_key)
     print(f"Uploaded to S3: s3://{bucket}/{selected_key}")
 
+    # Generate presigned URLs (valid for 7 days)
     selected_url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': selected_key}, ExpiresIn=604800)
     universe_url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': universe_key}, ExpiresIn=604800)
 
@@ -472,12 +473,16 @@ def send_report_email(selected_file, universe_file, summary_file=None):
 
 {summary_text}
 
-Download links (valid for 7 days):
-- Selected Portfolio: {selected_url}
-- Universe Metrics: {universe_url}"""
+📥 Download Files (links valid 7 days):
+
+Selected Portfolio CSV:
+{selected_url}
+
+Universe Metrics CSV:
+{universe_url}"""
     
     if summary_url:
-        body += f"\n- Full Summary: {summary_url}"
+        body += f"\n\nFull Summary TXT:\n{summary_url}"
 
     ses.send_email(
         Source=sender,
