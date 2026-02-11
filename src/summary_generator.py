@@ -1,27 +1,9 @@
 """
 Portfolio Summary Generator
-Fetches news and generates weekly summary for selected picks
+Generates weekly summary for selected picks
 """
 
-import yfinance as yf
-from datetime import datetime, timedelta
-
-
-def get_ticker_news(ticker, max_articles=2):
-    """Get recent news for a ticker"""
-    try:
-        t = yf.Ticker(ticker)
-        if not hasattr(t, 'news') or not t.news:
-            return []
-        news_items = []
-        for n in t.news[:max_articles]:
-            title = n.get("title", "").strip()
-            link = n.get("link", "").strip()
-            if title and link:  # Only include if both exist
-                news_items.append({"title": title, "link": link})
-        return news_items
-    except Exception as e:
-        return []
+from datetime import datetime
 
 
 def generate_weekly_summary(picks_df):
@@ -76,14 +58,6 @@ def generate_weekly_summary(picks_df):
             
             if reasons:
                 summary.append(f"  🎯 Why: {'; '.join(reasons)}")
-            
-            # Recent news
-            news = get_ticker_news(ticker, max_articles=2)
-            if news:
-                summary.append("  📰 Recent News:")
-                for article in news:
-                    summary.append(f"    • {article['title']}")
-                    summary.append(f"      🔗 {article['link']}")
     
     summary.append("\n" + "=" * 60)
     summary.append("⚠️  DISCLAIMER: This is automated analysis, not financial advice.")

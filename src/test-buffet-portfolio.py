@@ -484,12 +484,24 @@ Universe Metrics CSV:
     if summary_url:
         body += f"\n\nFull Summary TXT:\n{summary_url}"
 
+    # Convert markdown-style formatting to HTML and make URLs clickable
+    import re
+    html_body = body.replace('\n', '<br>\n')
+    html_body = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', html_body)  # **bold**
+    html_body = html_body.replace('  ', '&nbsp;&nbsp;')  # Preserve indentation
+    
+    # Convert URLs to clickable links
+    html_body = re.sub(r'(https://[^\s<]+)', r'<a href="\1">\1</a>', html_body)
+    
     ses.send_email(
         Source=sender,
         Destination={"ToAddresses": [recipient]},
         Message={
             "Subject": {"Data": "Daily Portfolio Report"},
-            "Body": {"Text": {"Data": body}},
+            "Body": {
+                "Text": {"Data": body},
+                "Html": {"Data": f"<html><body style='font-family: monospace; white-space: pre-wrap;'>{html_body}</body></html>"}
+            }
         },
     )
     print(f"Email sent to {recipient}")
