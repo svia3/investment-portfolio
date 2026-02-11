@@ -15,6 +15,15 @@ def generate_weekly_summary(picks_df):
     summary.append("=" * 60)
     summary.append("")
     
+    # Portfolio allocation summary
+    summary.append("💼 PORTFOLIO ALLOCATION BY SLEEVE")
+    summary.append("-" * 60)
+    sleeve_totals = picks_df.groupby('sleeve')['target_weight'].sum().sort_values(ascending=False)
+    for sleeve, weight in sleeve_totals.items():
+        sleeve_name = sleeve.upper().replace('_', ' ')
+        summary.append(f"  {sleeve_name:20s} {weight*100:5.1f}%")
+    summary.append("")
+    
     # Sleeve emojis
     sleeve_emoji = {
         "anchor": "⚓",
