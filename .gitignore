@@ -1,6 +1,9 @@
 outputs/
 *.csv
+*.txt
 __pycache__/
 *.pyc
 .env
 .DS_Store
+src/setup-aws-creds.sh
+.context/

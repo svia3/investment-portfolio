@@ -1,10 +1,21 @@
 #!/bin/bash
 # Complete deployment for Buffett Portfolio
-# Update these variables with your information:
+# Usage: ./deploy-complete.sh <aws-region> <aws-account-id> <email>
 
-REGION="us-west-2"
-ACCOUNT_ID="YOUR_ACCOUNT_ID"
-EMAIL="your-email@example.com"
+set -e
+
+# Disable AWS CLI pager
+export AWS_PAGER=""
+
+if [ $# -lt 3 ]; then
+  echo "Usage: ./deploy-complete.sh <aws-region> <aws-account-id> <email>"
+  echo "Example: ./deploy-complete.sh us-west-2 123456789012 you@example.com"
+  exit 1
+fi
+
+REGION="$1"
+ACCOUNT_ID="$2"
+EMAIL="$3"
 
 echo "🚀 Starting deployment..."
 
@@ -16,9 +27,15 @@ echo "📦 Step 1: Deploying infrastructure (S3, ECR, IAM, Docker)..."
 # Step 2: Verify SES email
 echo ""
 echo "📧 Step 2: Verifying SES email..."
-aws ses verify-email-identity --email-address ${EMAIL} --region ${REGION}
-echo "⚠️  CHECK YOUR EMAIL and click the verification link!"
-read -p "Press Enter after verifying your email..."
+VERIFIED=$(aws ses get-identity-verification-attributes --identities ${EMAIL} --region ${REGION} --query "VerificationAttributes.\"${EMAIL}\".VerificationStatus" --output text 2>/dev/null)
+
+if [ "$VERIFIED" = "Success" ]; then
+  echo "✅ Email ${EMAIL} already verified"
+else
+  aws ses verify-email-identity --email-address ${EMAIL} --region ${REGION}
+  echo "⚠️  CHECK YOUR EMAIL and click the verification link!"
+  read -p "Press Enter after verifying your email..."
+fi
 
 # Step 3: Create CloudWatch log group
 echo ""
@@ -30,8 +47,55 @@ aws logs create-log-group \
 # Step 4: Register ECS task definition
 echo ""
 echo "🐳 Step 4: Registering ECS task definition..."
+
+# Create task definition with actual values
+cat > /tmp/task-definition.json <<EOF
+{
+  "family": "buffett-portfolio-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "taskRoleArn": "arn:aws:iam::${ACCOUNT_ID}:role/BuffettPortfolioTaskRole",
+  "executionRoleArn": "arn:aws:iam::${ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "buffett-portfolio",
+      "image": "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/buffett-portfolio:latest",
+      "essential": true,
+      "environment": [
+        {
+          "name": "S3_BUCKET",
+          "value": "buffett-portfolio-reports"
+        },
+        {
+          "name": "SENDER_EMAIL",
+          "value": "${EMAIL}"
+        },
+        {
+          "name": "RECIPIENT_EMAIL",
+          "value": "${EMAIL}"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "${REGION}"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/buffett-portfolio",
+          "awslogs-region": "${REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
+EOF
+
 aws ecs register-task-definition \
-  --cli-input-json file://infra/task-definition-template.json \
+  --cli-input-json file:///tmp/task-definition.json \
   --region ${REGION}
 
 # Step 5: Get VPC info for EventBridge
