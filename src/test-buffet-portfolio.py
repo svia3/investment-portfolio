@@ -429,48 +429,6 @@ def build_portfolio(
     return picks_df.sort_values(["sleeve", "target_weight"], ascending=[True, False]), all_df.sort_values(["sleeve", "score"], ascending=[True, False])
 
 
-def main():
-    from datetime import datetime
-    
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d_%H-%M")
-    selected_file = f"selected_portfolio_{timestamp}.csv"
-    universe_file = f"universe_metrics_{timestamp}.csv"
-
-    try:
-        picks_df, all_df = build_portfolio(
-            universe=UNIVERSE,
-            sleeve_weights=SLEEVE_TARGET_WEIGHTS,
-            screen=SCREEN,
-            picks_per_sleeve=PICKS_PER_SLEEVE,
-        )
-
-        print("\n=== SELECTED PORTFOLIO ===")
-        print(picks_df.to_string(index=False))
-
-        print("\n=== NOTES ===")
-        print("- 'passes_screen=False' means it violated guardrails (often missing data for ETFs).")
-        print("- P/E data for ETFs can be missing or approximate; use as a rough value signal.")
-        print("- This is a portfolio construction assistant, not financial advice.")
-
-        picks_df.to_csv(selected_file, index=False)
-        all_df.to_csv(universe_file, index=False)
-        print(f"\nSaved: {selected_file}, {universe_file}")
-
-        # Generate summary with news
-        from summary_generator import save_summary
-        summary_file = save_summary(picks_df, timestamp)
-
-        send_report_email(selected_file, universe_file, summary_file)
-
-    except Exception as e:
-        print(f"ERROR: {e}")
-        raise
-
-
-if __name__ == "__main__":
-    main()
-
-# S3 + SES Integration
 def send_report_email(selected_file, universe_file, summary_file=None):
     import os
     import boto3
@@ -530,3 +488,44 @@ Download links (valid for 7 days):
         },
     )
     print(f"Email sent to {recipient}")
+
+
+def main():
+    from datetime import datetime
+    
+    timestamp = datetime.utcnow().strftime("%Y-%m-%d_%H-%M")
+    selected_file = f"selected_portfolio_{timestamp}.csv"
+    universe_file = f"universe_metrics_{timestamp}.csv"
+
+    try:
+        picks_df, all_df = build_portfolio(
+            universe=UNIVERSE,
+            sleeve_weights=SLEEVE_TARGET_WEIGHTS,
+            screen=SCREEN,
+            picks_per_sleeve=PICKS_PER_SLEEVE,
+        )
+
+        print("\n=== SELECTED PORTFOLIO ===")
+        print(picks_df.to_string(index=False))
+
+        print("\n=== NOTES ===")
+        print("- 'passes_screen=False' means it violated guardrails (often missing data for ETFs).")
+        print("- P/E data for ETFs can be missing or approximate; use as a rough value signal.")
+        print("- This is a portfolio construction assistant, not financial advice.")
+
+        picks_df.to_csv(selected_file, index=False)
+        all_df.to_csv(universe_file, index=False)
+        print(f"\nSaved: {selected_file}, {universe_file}")
+
+        # Generate summary with news
+        from summary_generator import save_summary
+        summary_file = save_summary(picks_df, timestamp)
+
+        send_report_email(selected_file, universe_file, summary_file)
+
+    except Exception as e:
+        print(f"ERROR: {e}")
+        raise
+
+if __name__ == "__main__":
+    main()

@@ -54,7 +54,8 @@ def generate_weekly_summary(picks_df):
             score = row.get('score', 0)
             
             summary.append(f"\n💼 **{ticker}** ({weight:.1f}% allocation)")
-            summary.append(f"  📉 PE Ratio: {pe:.1f if isinstance(pe, (int, float)) else pe}")
+            pe_str = f"{pe:.1f}" if isinstance(pe, (int, float)) else str(pe)
+            summary.append(f"  📉 PE Ratio: {pe_str}")
             summary.append(f"  ⭐ Score: {score:.2f}")
             
             # Why picked

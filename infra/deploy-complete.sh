@@ -7,6 +7,10 @@ set -e
 # Disable AWS CLI pager
 export AWS_PAGER=""
 
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
 if [ $# -lt 3 ]; then
   echo "Usage: ./deploy-complete.sh <aws-region> <aws-account-id> <email>"
   echo "Example: ./deploy-complete.sh us-west-2 123456789012 you@example.com"
@@ -22,7 +26,7 @@ echo "🚀 Starting deployment..."
 # Step 1: Deploy infrastructure
 echo ""
 echo "📦 Step 1: Deploying infrastructure (S3, ECR, IAM, Docker)..."
-./infra/deploy.sh ${REGION} ${ACCOUNT_ID}
+"${SCRIPT_DIR}/deploy.sh" ${REGION} ${ACCOUNT_ID}
 
 # Step 2: Verify SES email
 echo ""

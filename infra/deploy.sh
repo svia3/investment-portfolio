@@ -49,7 +49,26 @@ else
   echo "Pushed tags: ${IMAGE_TAG}, latest"
 fi
 
-echo "=== Step 4: Create IAM Role for ECS Task ==="
+echo "=== Step 4: Create IAM Roles for ECS ==="
+
+# Create ECS Task Execution Role (for pulling images, logs)
+echo "Creating ecsTaskExecutionRole..."
+aws iam create-role --role-name ecsTaskExecutionRole \
+  --assume-role-policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Effect": "Allow",
+      "Principal": {"Service": "ecs-tasks.amazonaws.com"},
+      "Action": "sts:AssumeRole"
+    }]
+  }' 2>/dev/null || echo "ecsTaskExecutionRole already exists"
+
+aws iam attach-role-policy \
+  --role-name ecsTaskExecutionRole \
+  --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+# Create ECS Task Role (for S3 + SES permissions)
+echo "Creating BuffettPortfolioTaskRole..."
 ROLE_NAME="BuffettPortfolioTaskRole"
 
 aws iam create-role --role-name ${ROLE_NAME} \
