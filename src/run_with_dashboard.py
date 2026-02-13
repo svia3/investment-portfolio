@@ -11,7 +11,7 @@ from datetime import datetime
 import boto3
 
 # Configuration
-BUCKET_NAME = "portfolio-reports-svia"
+BUCKET_NAME = "buffett-portfolio-reports"
 REGION = "us-west-2"
 EMAIL_TO = "stephenvia3@gmail.com"
 

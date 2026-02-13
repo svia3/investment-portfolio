@@ -73,9 +73,19 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
         # Sort by performance
         sleeve_data[sleeve].sort(key=lambda x: x['change_pct'], reverse=True)
     
-    # Calculate portfolio totals from MY actual holdings
-    total_value = total_portfolio_value  # Use actual holdings value calculated above
-    avg_change = sum(h['change_pct'] for sleeve in sleeve_data.values() for h in sleeve) / len([h for sleeve in sleeve_data.values() for h in sleeve]) if sleeve_data else 0
+    # Calculate MY actual holdings totals for header
+    my_holdings_total = 0
+    my_holdings_count = 0
+    for account, holdings in MY_HOLDINGS.items():
+        for ticker, data in holdings.items():
+            perf = fetch_performance_data(ticker)
+            if perf:
+                my_holdings_total += perf['current_price'] * data['quantity']
+                my_holdings_count += 1
+    
+    total_invested = sum(TOTAL_INVESTED.values())
+    my_gain = my_holdings_total - total_invested
+    my_gain_pct = (my_gain / total_invested * 100) if total_invested > 0 else 0
     
     # Generate HTML
     html = f"""<!DOCTYPE html>
@@ -129,22 +139,22 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
 </head>
 <body>
     <div class="header">
-        <h1>📊 Buffett Portfolio Dashboard</h1>
+        <h1>📊 Portfolio Dashboard</h1>
         <p>Last Updated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
         <div class="stats">
             <div class="stat">
-                <div class="stat-value">${total_value:,.2f}</div>
-                <div class="stat-label">Total Value</div>
+                <div class="stat-value">${my_holdings_total:,.2f}</div>
+                <div class="stat-label">Current Value</div>
             </div>
             <div class="stat">
-                <div class="stat-value {'positive' if avg_change >= 0 else 'negative'}">
-                    {'+' if avg_change >= 0 else ''}{avg_change:.2f}%
+                <div class="stat-value {'positive' if my_gain >= 0 else 'negative'}">
+                    ${my_gain:+,.2f} ({my_gain_pct:+.2f}%)
                 </div>
-                <div class="stat-label">7-Day Performance</div>
+                <div class="stat-label">Total Gain/Loss</div>
             </div>
             <div class="stat">
-                <div class="stat-value">{len([h for s in sleeve_data.values() for h in s])}</div>
-                <div class="stat-label">Holdings</div>
+                <div class="stat-value">{my_holdings_count}</div>
+                <div class="stat-label">My Holdings</div>
             </div>
         </div>
     </div>
