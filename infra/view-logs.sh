@@ -3,7 +3,7 @@
 # Usage: ./view-logs.sh [--follow]
 
 REGION="us-west-2"
-LOG_GROUP="/ecs/buffett-portfolio"
+LOG_GROUP="/ecs/portfolio-tracker"
 
 if [ "$1" = "--follow" ]; then
   echo "📊 Following logs (Ctrl+C to stop)..."

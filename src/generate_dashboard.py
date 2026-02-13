@@ -73,9 +73,9 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
         # Sort by performance
         sleeve_data[sleeve].sort(key=lambda x: x['change_pct'], reverse=True)
     
-    # Calculate portfolio totals
-    total_value = sum(h['current_price'] for sleeve in sleeve_data.values() for h in sleeve)
-    avg_change = sum(h['change_pct'] for sleeve in sleeve_data.values() for h in sleeve) / len([h for sleeve in sleeve_data.values() for h in sleeve])
+    # Calculate portfolio totals from MY actual holdings
+    total_value = total_portfolio_value  # Use actual holdings value calculated above
+    avg_change = sum(h['change_pct'] for sleeve in sleeve_data.values() for h in sleeve) / len([h for sleeve in sleeve_data.values() for h in sleeve]) if sleeve_data else 0
     
     # Generate HTML
     html = f"""<!DOCTYPE html>
@@ -381,6 +381,7 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
                 }}
             }}
         }});
+    """
     
     # Add chart data - My Holdings first
     for holding in my_holdings_data:
@@ -520,8 +521,9 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
         f.write(html)
     
     print(f"\n✅ Dashboard generated: {output_html}")
-    print(f"📊 Total Value: ${total_value:,.2f}")
-    print(f"📈 30-Day Change: {'+' if avg_change >= 0 else ''}{avg_change:.2f}%")
+    print(f"📊 Current Value: ${total_portfolio_value:,.2f}")
+    print(f"💰 Total Invested: ${total_invested:,.2f}")
+    print(f"📈 Total Gain/Loss: ${total_gain:+,.2f} ({total_gain_pct:+.2f}%)")
 
 
 if __name__ == '__main__':

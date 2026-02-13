@@ -1,7 +1,7 @@
 #!/bin/bash
 # Update S3 bucket policy to allow public read access for dashboard
 
-BUCKET_NAME="buffett-portfolio-reports"
+BUCKET_NAME="portfolio-tracker-reports"
 REGION="us-west-2"
 
 echo "Setting up public access for dashboard..."
@@ -23,7 +23,7 @@ cat > /tmp/dashboard-policy.json << 'EOF'
       "Effect": "Allow",
       "Principal": "*",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::buffett-portfolio-reports/dashboard.html"
+      "Resource": "arn:aws:s3:::portfolio-tracker-reports/dashboard.html"
     }
   ]
 }

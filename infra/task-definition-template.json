@@ -1,20 +1,20 @@
 {
-  "family": "buffett-portfolio-task",
+  "family": "portfolio-tracker-task",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
   "memory": "512",
-  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/BuffettPortfolioTaskRole",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/PortfolioTaskRole",
   "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
-      "name": "buffett-portfolio",
-      "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/buffett-portfolio:latest",
+      "name": "portfolio-tracker",
+      "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/portfolio-tracker:latest",
       "essential": true,
       "environment": [
         {
           "name": "S3_BUCKET",
-          "value": "buffett-portfolio-reports"
+          "value": "portfolio-tracker-reports"
         },
         {
           "name": "SENDER_EMAIL",
@@ -32,7 +32,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/buffett-portfolio",
+          "awslogs-group": "/ecs/portfolio-tracker",
           "awslogs-region": "us-west-2",
           "awslogs-stream-prefix": "ecs"
         }

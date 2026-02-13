@@ -45,7 +45,7 @@ fi
 echo ""
 echo "📝 Step 3: Creating CloudWatch log group..."
 aws logs create-log-group \
-  --log-group-name /ecs/buffett-portfolio \
+  --log-group-name /ecs/portfolio-tracker \
   --region ${REGION} 2>/dev/null || echo "Log group already exists"
 
 # Step 4: Register ECS task definition
@@ -55,22 +55,22 @@ echo "🐳 Step 4: Registering ECS task definition..."
 # Create task definition with actual values
 cat > /tmp/task-definition.json <<EOF
 {
-  "family": "buffett-portfolio-task",
+  "family": "portfolio-tracker-task",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
   "memory": "512",
-  "taskRoleArn": "arn:aws:iam::${ACCOUNT_ID}:role/BuffettPortfolioTaskRole",
+  "taskRoleArn": "arn:aws:iam::${ACCOUNT_ID}:role/PortfolioTaskRole",
   "executionRoleArn": "arn:aws:iam::${ACCOUNT_ID}:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
-      "name": "buffett-portfolio",
-      "image": "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/buffett-portfolio:latest",
+      "name": "portfolio-tracker",
+      "image": "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/portfolio-tracker:latest",
       "essential": true,
       "environment": [
         {
           "name": "S3_BUCKET",
-          "value": "buffett-portfolio-reports"
+          "value": "portfolio-tracker-reports"
         },
         {
           "name": "SENDER_EMAIL",
@@ -88,7 +88,7 @@ cat > /tmp/task-definition.json <<EOF
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/buffett-portfolio",
+          "awslogs-group": "/ecs/portfolio-tracker",
           "awslogs-region": "${REGION}",
           "awslogs-stream-prefix": "ecs"
         }
@@ -141,11 +141,17 @@ aws iam put-role-policy --role-name EventBridgeECSRole \
     }]
   }'
 
-# Step 7: Create EventBridge Scheduler (daily at 6 AM PT)
+# Step 7: Create/Update EventBridge Scheduler (daily at 6 AM PT)
 echo ""
-echo "⏰ Step 7: Creating daily schedule (6 AM PT)..."
-aws scheduler create-schedule \
-  --name buffett-portfolio-daily \
+echo "⏰ Step 7: Creating/updating daily schedule (6 AM PT)..."
+
+# Get latest task definition revision
+LATEST_REVISION=$(aws ecs describe-task-definition --task-definition portfolio-tracker-task --region ${REGION} --query 'taskDefinition.revision' --output text)
+TASK_DEF_ARN="arn:aws:ecs:${REGION}:${ACCOUNT_ID}:task-definition/portfolio-tracker-task:${LATEST_REVISION}"
+
+# Try to update existing schedule first
+aws scheduler update-schedule \
+  --name portfolio-tracker-daily \
   --schedule-expression "cron(0 14 * * ? *)" \
   --schedule-expression-timezone "America/Los_Angeles" \
   --flexible-time-window Mode=OFF \
@@ -153,7 +159,7 @@ aws scheduler create-schedule \
     \"Arn\": \"arn:aws:ecs:${REGION}:${ACCOUNT_ID}:cluster/default\",
     \"RoleArn\": \"arn:aws:iam::${ACCOUNT_ID}:role/EventBridgeECSRole\",
     \"EcsParameters\": {
-      \"TaskDefinitionArn\": \"arn:aws:ecs:${REGION}:${ACCOUNT_ID}:task-definition/buffett-portfolio-task:1\",
+      \"TaskDefinitionArn\": \"${TASK_DEF_ARN}\",
       \"LaunchType\": \"FARGATE\",
       \"NetworkConfiguration\": {
         \"awsvpcConfiguration\": {
@@ -164,14 +170,35 @@ aws scheduler create-schedule \
       }
     }
   }" \
-  --region ${REGION} 2>/dev/null || echo "Schedule already exists"
+  --region ${REGION} 2>/dev/null && echo "✅ Schedule updated to revision ${LATEST_REVISION}" || \
+aws scheduler create-schedule \
+  --name portfolio-tracker-daily \
+  --schedule-expression "cron(0 14 * * ? *)" \
+  --schedule-expression-timezone "America/Los_Angeles" \
+  --flexible-time-window Mode=OFF \
+  --target "{
+    \"Arn\": \"arn:aws:ecs:${REGION}:${ACCOUNT_ID}:cluster/default\",
+    \"RoleArn\": \"arn:aws:iam::${ACCOUNT_ID}:role/EventBridgeECSRole\",
+    \"EcsParameters\": {
+      \"TaskDefinitionArn\": \"${TASK_DEF_ARN}\",
+      \"LaunchType\": \"FARGATE\",
+      \"NetworkConfiguration\": {
+        \"awsvpcConfiguration\": {
+          \"Subnets\": [\"${SUBNET_ID}\"],
+          \"SecurityGroups\": [\"${SG_ID}\"],
+          \"AssignPublicIp\": \"ENABLED\"
+        }
+      }
+    }
+  }" \
+  --region ${REGION} && echo "✅ Schedule created with revision ${LATEST_REVISION}"
 
 echo ""
 echo "✅ Deployment complete!"
 echo ""
 echo "📊 Summary:"
-echo "  - S3 Bucket: buffett-portfolio-reports"
-echo "  - Docker Image: ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/buffett-portfolio:latest"
+echo "  - S3 Bucket: portfolio-tracker-reports"
+echo "  - Docker Image: ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/portfolio-tracker:latest"
 echo "  - Daily run: 6:00 AM Pacific Time"
 echo "  - Email: ${EMAIL}"
 echo ""

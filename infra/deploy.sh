@@ -9,9 +9,9 @@ export AWS_PAGER=""
 
 REGION=${1:-us-west-2}
 ACCOUNT_ID=${2}
-REPO_NAME="buffett-portfolio"
+REPO_NAME="portfolio-tracker"
 IMAGE_TAG="$(git rev-parse --short HEAD 2>/dev/null || echo 'latest')"
-BUCKET_NAME="buffett-portfolio-reports"
+BUCKET_NAME="portfolio-reports-svia"
 
 if [ -z "$ACCOUNT_ID" ]; then
   echo "Usage: ./deploy.sh <aws-region> <aws-account-id>"
@@ -68,8 +68,8 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
 # Create ECS Task Role (for S3 + SES permissions)
-echo "Creating BuffettPortfolioTaskRole..."
-ROLE_NAME="BuffettPortfolioTaskRole"
+echo "Creating PortfolioTaskRole..."
+ROLE_NAME="PortfolioTaskRole"
 
 aws iam create-role --role-name ${ROLE_NAME} \
   --assume-role-policy-document '{
@@ -82,7 +82,7 @@ aws iam create-role --role-name ${ROLE_NAME} \
   }' 2>/dev/null || echo "Role already exists"
 
 aws iam put-role-policy --role-name ${ROLE_NAME} \
-  --policy-name BuffettPortfolioPolicy \
+  --policy-name PortfolioPolicy \
   --policy-document file://infra/task-role-policy.json
 
 echo "=== Deployment Complete ==="

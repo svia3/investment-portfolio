@@ -11,7 +11,7 @@ from datetime import datetime
 import boto3
 
 # Configuration
-BUCKET_NAME = "buffett-portfolio-reports"
+BUCKET_NAME = "portfolio-reports-svia"
 REGION = "us-west-2"
 EMAIL_TO = "stephenvia3@gmail.com"
 
@@ -19,7 +19,7 @@ def run_portfolio_selection():
     """Run the main portfolio builder"""
     print("🔍 Running portfolio selection...")
     result = subprocess.run(
-        ['python', '/app/test-buffet-portfolio.py'],
+        ['python', '/app/portfolio-builder.py'],
         capture_output=True,
         text=True
     )
@@ -84,44 +84,24 @@ def send_email_with_dashboard(dashboard_url: str, portfolio_summary: str):
     
     ses = boto3.client('ses', region_name=REGION)
     
-    # Extract key metrics from summary
-    lines = portfolio_summary.split('\n')
-    summary_text = '\n'.join(lines[:10]) if lines else "Portfolio updated"
-    
     html_body = f"""
     <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px; }}
-            .summary {{ background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; white-space: pre-wrap; }}
-            .link {{ font-size: 16px; color: #667eea; }}
-        </style>
-    </head>
-    <body>
-        <h2>📊 Portfolio Update - {datetime.now().strftime('%B %d, %Y')}</h2>
-        
-        <div class="summary">{summary_text}</div>
-        
-        <p class="link">
-            <a href="{dashboard_url}">View Interactive Dashboard →</a>
-        </p>
+    <body style="font-family: Arial, sans-serif; padding: 20px;">
+        <p>Portfolio updated {datetime.now().strftime('%b %d')}</p>
+        <a href="{dashboard_url}" style="background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Dashboard</a>
     </body>
     </html>
     """
     
-    text_body = f"""Portfolio Update - {datetime.now().strftime('%B %d, %Y')}
-
-{summary_text}
-
-View Dashboard: {dashboard_url}
-    """
+    text_body = f"""Portfolio updated {datetime.now().strftime('%b %d')}
+{dashboard_url}"""
     
     try:
         response = ses.send_email(
             Source=EMAIL_TO,
             Destination={'ToAddresses': [EMAIL_TO]},
             Message={
-                'Subject': {'Data': f'Portfolio Update - {datetime.now().strftime("%b %d")}'},
+                'Subject': {'Data': f'Portfolio {datetime.now().strftime("%b %d")}'},
                 'Body': {
                     'Text': {'Data': text_body},
                     'Html': {'Data': html_body}

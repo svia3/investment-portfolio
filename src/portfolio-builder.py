@@ -683,7 +683,8 @@ def main():
         from summary_generator import save_summary
         summary_file = save_summary(picks_df, timestamp)
 
-        send_report_email(selected_file, universe_file, summary_file)
+        # Email is now sent by run_with_dashboard.py
+        # send_report_email(selected_file, universe_file, summary_file)
 
     except Exception as e:
         print(f"ERROR: {e}")

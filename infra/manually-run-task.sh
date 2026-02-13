@@ -6,7 +6,7 @@ set -e
 
 REGION="us-west-2"
 CLUSTER="default"
-TASK_DEF="buffett-portfolio-task:1"
+TASK_DEF="buffett-portfolio-task"
 
 echo "🚀 Running ECS task manually..."
 
