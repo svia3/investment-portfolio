@@ -87,57 +87,107 @@ SLEEVE_RULES = {
 }
 
 
-# Universe: start ETF-heavy; you can add stock tickers too.
+# Universe: ~40 ETFs and stocks per sector
 UNIVERSE = {
 
     "anchor": [
-        "VOO", "VTI", "IVV", "ITOT",
-        "BRK-B", "MSFT", "AAPL"
+        # ETFs
+        "VOO", "VTI", "IVV", "ITOT", "SPY", "SCHX", "SPLG", "SPTM",
+        # Stocks
+        "AAPL", "MSFT", "GOOGL", "AMZN", "BRK-B", "JPM", "V", "JNJ", "WMT", "PG", 
+        "MA", "HD", "DIS", "NVDA", "META", "LLY", "AVGO", "TSM", "XOM", "CVX",
+        "ABBV", "MRK", "KO", "PEP", "COST", "CSCO", "ACN", "MCD", "TMO", "ABT",
+        "ORCL", "CRM", "ADBE", "NKE", "DHR", "TXN", "UNH", "PM", "NEE", "HON"
     ],
 
     "value_hedge": [
-        "SCHD", "VTV", "IWD", "DGRO", "QUAL", "HDV",
-        "KO", "PG", "PEP", "MCD", "CVX"
+        # ETFs
+        "SCHD", "VTV", "IWD", "DGRO", "QUAL", "HDV", "VYM", "DVY",
+        # Stocks
+        "KO", "PG", "PEP", "MCD", "CVX", "JNJ", "WMT", "VZ", "T", "PM",
+        "MO", "BMY", "MMM", "CAT", "DE", "UPS", "RTX", "BA", "GD", "LMT",
+        "XOM", "COP", "PSX", "MPC", "KMB", "CL", "GIS", "K", "HSY", "CPB",
+        "SO", "DUK", "D", "AEP", "EXC", "ED", "ES", "FE", "ETR", "WEC"
     ],
 
     "growth": [
-        "SCHG", "VUG", "SPYG", "IWF",
-        "MSFT", "AMZN", "GOOGL", "META"
+        # ETFs
+        "SCHG", "VUG", "SPYG", "IWF", "VONG", "MGK", "IVW", "SPBO",
+        # Stocks
+        "MSFT", "AMZN", "GOOGL", "META", "NFLX", "TSLA", "NVDA", "CRM", "ADBE", "NOW",
+        "SHOP", "SQ", "UBER", "ABNB", "SNOW", "DDOG", "NET", "CRWD", "ZS", "OKTA",
+        "TEAM", "WDAY", "PANW", "FTNT", "MRVL", "ANET", "SNPS", "CDNS", "INTU", "ISRG",
+        "REGN", "VRTX", "ALNY", "MRNA", "BNTX", "ILMN", "GILD", "BIIB", "AMGN", "CELG"
     ],
 
     "ai_tilt": [
-        "SMH", "SOXX", "XSD",
-        "NVDA", "AVGO", "TSM", "ASML", "AMD", "MU"
+        # ETFs
+        "SMH", "SOXX", "XSD", "SOXQ", "PSI", "IGV", "QTEC", "SKYY",
+        # Stocks
+        "NVDA", "AVGO", "TSM", "ASML", "AMD", "MU", "QCOM", "INTC", "MRVL", "ARM",
+        "PLTR", "SNOW", "AI", "BBAI", "SOUN", "MSFT", "GOOGL", "META", "AMZN", "ORCL",
+        "CRM", "NOW", "ADBE", "INTU", "PANW", "CRWD", "ZS", "NET", "DDOG", "S",
+        "ANET", "SNPS", "CDNS", "KLAC", "LRCX", "AMAT", "NXPI", "TXN", "ADI", "MCHP"
     ],
 
     "financials": [
-        "VFH", "XLF", "FNCL", "IYF", "KBE",
-        "JPM", "BAC", "GS", "MS", "BLK", "BRK-B"
+        # ETFs
+        "VFH", "XLF", "FNCL", "IYF", "KBE", "IAI", "KRE", "KBWB",
+        # Stocks
+        "JPM", "BAC", "GS", "MS", "BLK", "BRK-B", "C", "WFC", "SCHW", "AXP",
+        "USB", "PNC", "TFC", "COF", "BK", "STT", "NTRS", "BEN", "TROW", "IVZ",
+        "V", "MA", "PYPL", "SQ", "FIS", "FISV", "ADP", "PAYX", "BR", "MMC",
+        "AON", "WTW", "AJG", "BRO", "AFL", "MET", "PRU", "ALL", "TRV", "CB"
     ],
 
     "healthcare": [
-        "VHT", "XLV", "FHLC", "IXJ",
-        "UNH", "LLY", "MRK", "ABBV"
+        # ETFs
+        "VHT", "XLV", "FHLC", "IXJ", "IYH", "VBK", "IBB", "XBI",
+        # Stocks
+        "UNH", "LLY", "JNJ", "MRK", "ABBV", "TMO", "ABT", "DHR", "PFE", "BMY",
+        "AMGN", "GILD", "REGN", "VRTX", "ISRG", "SYK", "BSX", "MDT", "EW", "ZBH",
+        "BAX", "BDX", "HOLX", "ALGN", "IDXX", "IQV", "A", "LH", "DGX", "CVS",
+        "CI", "HUM", "CNC", "MOH", "ELV", "HCA", "THC", "UHS", "CYH", "LPLA"
     ],
 
     "small_mid": [
-        "VB", "VO", "IJR", "IJH", "AVUV", "VBR",
-        "URI", "FAST", "HUBB"
+        # ETFs
+        "VB", "VO", "IJR", "IJH", "AVUV", "VBR", "IWM", "SCHA",
+        # Stocks
+        "URI", "FAST", "HUBB", "POOL", "WST", "ODFL", "TDY", "ROL", "WSO", "FICO",
+        "VRSK", "MSCI", "SPGI", "MCO", "TRU", "EFX", "JKHY", "BR", "FDS", "IEX",
+        "PH", "ITW", "EMR", "ETN", "ROK", "AME", "ROP", "FTV", "XYL", "IEX",
+        "DOV", "FAST", "SNA", "PCAR", "CHRW", "JBHT", "KNX", "LSTR", "EXPD", "SAIA"
     ],
 
     "international": [
-        "VXUS", "IEFA", "VEA", "VWO", "AVEM",
-        "ASML", "NVO", "SAP", "TSM"
+        # ETFs
+        "VXUS", "IEFA", "VEA", "VWO", "AVEM", "IXUS", "ACWX", "VSGX",
+        # Stocks
+        "ASML", "NVO", "SAP", "TSM", "TM", "SONY", "NVS", "UL", "BABA", "SHOP",
+        "SE", "MELI", "PDD", "JD", "BIDU", "NIO", "XPEV", "LI", "GRAB", "DIDI",
+        "TCEHY", "BABA", "PDD", "JD", "NTES", "BILI", "IQ", "VIPS", "TME", "BEKE",
+        "RIO", "BHP", "VALE", "FCX", "SCCO", "GOLD", "NEM", "AEM", "KGC", "AU"
     ],
 
     "energy": [
-        "XLE", "VDE", "FENY", "IXC",
-        "XOM", "CVX", "COP", "EOG", "SLB"
+        # ETFs
+        "XLE", "VDE", "FENY", "IXC", "IYE", "PXE", "PSCE", "RYE",
+        # Stocks
+        "XOM", "CVX", "COP", "EOG", "SLB", "MPC", "PSX", "VLO", "OXY", "HAL",
+        "BKR", "NOV", "FTI", "HP", "CHK", "DVN", "FANG", "MRO", "APA", "HES",
+        "PXD", "CXO", "OVV", "CTRA", "EQT", "AR", "RRC", "SM", "MGY", "PR",
+        "LNG", "TELL", "NEXT", "GLNG", "FLNG", "KMI", "WMB", "OKE", "EPD", "ET"
     ],
 
     "infrastructure": [
-        "PAVE", "IFRA", "NFRA", "IGF",
-        "CAT", "NEE", "UNP", "DE"
+        # ETFs
+        "PAVE", "IFRA", "NFRA", "IGF", "PKB", "PXI", "ITB", "XHB",
+        # Stocks
+        "CAT", "NEE", "UNP", "DE", "NSC", "CSX", "SO", "DUK", "D", "AEP",
+        "EXC", "ED", "ES", "FE", "ETR", "WEC", "PEG", "XEL", "PCG", "SRE",
+        "AWK", "WM", "RSG", "WCN", "CWST", "GFL", "URI", "VMC", "MLM", "NUE",
+        "STLD", "RS", "CMC", "CLF", "X", "MT", "TX", "GGB", "VALE", "FCX"
     ]
 }
 
@@ -163,18 +213,27 @@ SCREEN = ScreenConfig(
     allow_missing_fields=True,
 )
 
-# Selection: how many picks per sleeve
+# Selection: 6 ETFs + 6 stocks per sleeve
 PICKS_PER_SLEEVE = {
-    "anchor": 2,           # 1–2
-    "value_hedge": 3,      # 2–3
-    "growth": 2,
-    "ai_tilt": 3,          # 2–3
-    "financials": 2,
-    "healthcare": 2,
-    "small_mid": 2,
-    "international": 2,
-    "energy": 2,
-    "infrastructure": 2    # 1–2
+    "anchor": 12,
+    "value_hedge": 12,
+    "growth": 12,
+    "ai_tilt": 12,
+    "financials": 12,
+    "healthcare": 12,
+    "small_mid": 12,
+    "international": 12,
+    "energy": 12,
+    "infrastructure": 12
+}
+
+# Track which are ETFs for balanced selection
+ETF_TICKERS = {
+    "VOO", "VTI", "IVV", "ITOT", "SPY", "SCHD", "VTV", "IWD", "DGRO", "QUAL", "HDV",
+    "SCHG", "VUG", "SPYG", "IWF", "SMH", "SOXX", "XSD", "VFH", "XLF", "FNCL", "IYF", "KBE",
+    "VHT", "XLV", "FHLC", "IXJ", "VB", "VO", "IJR", "IJH", "AVUV", "VBR",
+    "VXUS", "IEFA", "VEA", "VWO", "AVEM", "XLE", "VDE", "FENY", "IXC",
+    "PAVE", "IFRA", "NFRA", "IGF"
 }
 
 
@@ -209,10 +268,26 @@ def fetch_metrics(ticker: str) -> Dict[str, Optional[float]]:
     market_cap = safe_float(info.get("marketCap"))
     div_yield = safe_float(info.get("dividendYield"))
     beta = safe_float(info.get("beta"))
-
-    # Optional extras (nice-to-have; may be missing)
     price_to_book = safe_float(info.get("priceToBook"))
     peg = safe_float(info.get("pegRatio"))
+    revenue_growth = safe_float(info.get("revenueGrowth"))
+    
+    # Momentum factors - fetch historical prices
+    try:
+        hist = t.history(period="6mo")
+        if not hist.empty and len(hist) > 60:
+            current_price = hist['Close'].iloc[-1]
+            price_3m_ago = hist['Close'].iloc[-63] if len(hist) >= 63 else hist['Close'].iloc[0]
+            price_6m_ago = hist['Close'].iloc[0]
+            high_52w = safe_float(info.get("fiftyTwoWeekHigh"))
+            
+            return_3m = ((current_price - price_3m_ago) / price_3m_ago) * 100 if price_3m_ago > 0 else None
+            return_6m = ((current_price - price_6m_ago) / price_6m_ago) * 100 if price_6m_ago > 0 else None
+            proximity_52w = (current_price / high_52w) * 100 if high_52w and high_52w > 0 else None
+        else:
+            return_3m = return_6m = proximity_52w = None
+    except:
+        return_3m = return_6m = proximity_52w = None
 
     return {
         "ticker": ticker,
@@ -226,6 +301,10 @@ def fetch_metrics(ticker: str) -> Dict[str, Optional[float]]:
         "beta": beta,
         "priceToBook": price_to_book,
         "pegRatio": peg,
+        "revenueGrowth": revenue_growth,
+        "return_3m": return_3m,
+        "return_6m": return_6m,
+        "proximity_52w": proximity_52w,
     }
 
 
@@ -290,25 +369,78 @@ def passes_screen(row: pd.Series, cfg: ScreenConfig) -> Tuple[bool, List[str]]:
 
 def score_row(row: pd.Series) -> float:
     """
-    Sleeve-aware composite score:
-      - Valuation: lower PE is better (uses trailing, falls back to forward)
-      - Quality: ROE + profit margin
-      - Balance: lower debt-to-equity is better
-      - Risk: lower beta is better
-      - Dividend: small bonus for yield (especially in value_hedge / energy)
+    Multi-factor scoring:
+      40% Value: P/E, P/B, dividend yield
+      30% Momentum: 3m/6m returns, 52w proximity
+      20% Quality: ROE, profit margin, revenue growth
+      10% Risk: beta, volatility
     """
 
     sleeve = row.get("sleeve")
     rules = SLEEVE_RULES.get(sleeve, {})
+    
+    # Base weights
     w_pe = rules.get("w_pe", 1.0)
     w_quality = rules.get("w_quality", 0.7)
     w_balance = rules.get("w_balance", 0.5)
     w_risk = rules.get("w_risk", 0.5)
     w_div = rules.get("w_div", 0.1)
 
+    score = 0.0
+    
+    # === VALUE FACTORS (40%) ===
     trailing_pe = row.get("trailingPE")
     forward_pe = row.get("forwardPE")
     pe = trailing_pe if trailing_pe is not None else forward_pe
+    
+    if pe is not None and pe > 0:
+        score += w_pe * (50.0 / pe) * 0.4  # 40% weight on value
+    
+    pb = row.get("priceToBook")
+    if pb is not None and pb > 0:
+        score += (10.0 / pb) * 0.4
+    
+    div = row.get("dividendYield")
+    if div is not None and div > 0:
+        score += w_div * (100.0 * div) * 0.4
+    
+    # === MOMENTUM FACTORS (30%) ===
+    ret_3m = row.get("return_3m")
+    ret_6m = row.get("return_6m")
+    prox_52w = row.get("proximity_52w")
+    
+    if ret_3m is not None:
+        score += (ret_3m / 10.0) * 0.3  # Normalize: 10% return = 1 point
+    if ret_6m is not None:
+        score += (ret_6m / 20.0) * 0.3  # Normalize: 20% return = 1 point
+    if prox_52w is not None:
+        score += (prox_52w / 20.0) * 0.3  # Near 52w high = bonus
+    
+    # === QUALITY FACTORS (20%) ===
+    roe = row.get("returnOnEquity")
+    pm = row.get("profitMargins")
+    rev_growth = row.get("revenueGrowth")
+    
+    if roe is not None and roe > 0:
+        score += w_quality * (5.0 * roe) * 0.2
+    if pm is not None and pm > 0:
+        score += w_quality * (5.0 * pm) * 0.2
+    if rev_growth is not None and rev_growth > 0:
+        score += (rev_growth * 10.0) * 0.2  # 10% growth = 1 point
+    
+    # === RISK FACTORS (10%) ===
+    beta = row.get("beta")
+    dte = row.get("debtToEquity")
+    
+    if beta is not None and beta > 0:
+        score += w_risk * (2.0 / beta) * 0.1
+    else:
+        score -= 0.1
+    
+    if dte is not None and dte >= 0:
+        score += w_balance * (5.0 / (1.0 + dte)) * 0.1
+
+    return score
 
     roe = row.get("returnOnEquity")
     pm = row.get("profitMargins")
@@ -383,29 +515,42 @@ def build_portfolio(
     all_df["score"] = scores
     all_df["pe_used"] = all_df["trailingPE"].fillna(all_df["forwardPE"])
 
-    # Pick top names per sleeve among those passing
+    # Pick top names per sleeve: 6 ETFs + 6 stocks
     picks = []
     for sleeve, w in sleeve_weights.items():
-        num_picks = PICKS_PER_SLEEVE.get(sleeve, 1)
-
-        sleeve_df = all_df[
-            (all_df["sleeve"] == sleeve) &
-            (all_df["passes_screen"])
-        ].sort_values("score", ascending=False)
-
-        # If nothing passes screen, fall back to best-scoring even if it failed
-        if sleeve_df.empty:
-            sleeve_df = all_df[
-                all_df["sleeve"] == sleeve
-            ].sort_values("score", ascending=False)
-
-        # Take top N for that sleeve
-        sleeve_df = sleeve_df.head(num_picks)
-
+        num_picks = PICKS_PER_SLEEVE.get(sleeve, 12)
+        target_etfs = 6
+        target_stocks = 6
+        
+        sleeve_df = all_df[all_df["sleeve"] == sleeve].copy()
+        
+        # Separate ETFs and stocks
+        sleeve_df["is_etf"] = sleeve_df["ticker"].isin(ETF_TICKERS)
+        
+        # Get passing ETFs and stocks
+        etf_df = sleeve_df[
+            (sleeve_df["is_etf"]) &
+            (sleeve_df["passes_screen"])
+        ].sort_values("score", ascending=False).head(target_etfs)
+        
+        stock_df = sleeve_df[
+            (~sleeve_df["is_etf"]) &
+            (sleeve_df["passes_screen"])
+        ].sort_values("score", ascending=False).head(target_stocks)
+        
+        # If not enough passing, fall back to best-scoring regardless of screen
+        if len(etf_df) < target_etfs:
+            etf_df = sleeve_df[sleeve_df["is_etf"]].sort_values("score", ascending=False).head(target_etfs)
+        if len(stock_df) < target_stocks:
+            stock_df = sleeve_df[~sleeve_df["is_etf"]].sort_values("score", ascending=False).head(target_stocks)
+        
+        # Combine
+        sleeve_picks = pd.concat([etf_df, stock_df])
+        
         # Split sleeve weight evenly across the selected tickers
-        per_pick_weight = w / len(sleeve_df)
+        per_pick_weight = w / len(sleeve_picks)
 
-        for _, r in sleeve_df.iterrows():
+        for _, r in sleeve_picks.iterrows():
             picks.append({
                 "sleeve": sleeve,
                 "ticker": r["ticker"],

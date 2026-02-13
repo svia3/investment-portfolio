@@ -7,3 +7,4 @@ __pycache__/
 .DS_Store
 src/setup-aws-creds.sh
 .context/
+src/my_holdings.py

@@ -51,7 +51,7 @@ def generate_and_upload_dashboard():
         check=True
     )
     
-    # Upload to S3 with public-read ACL
+    # Upload to S3
     print("☁️  Uploading dashboard to S3...")
     s3 = boto3.client('s3', region_name=REGION)
     
@@ -61,14 +61,22 @@ def generate_and_upload_dashboard():
             Key='dashboard.html',
             Body=f,
             ContentType='text/html',
-            CacheControl='no-cache',
-            ACL='public-read'
+            CacheControl='no-cache'
         )
     
     dashboard_url = f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/dashboard.html"
-    print(f"✅ Dashboard uploaded: {dashboard_url}")
     
-    return dashboard_url
+    # Generate presigned URL (valid for 7 days) since bucket doesn't allow public access
+    presigned_url = s3.generate_presigned_url(
+        'get_object',
+        Params={'Bucket': BUCKET_NAME, 'Key': 'dashboard.html'},
+        ExpiresIn=604800  # 7 days
+    )
+    
+    print(f"✅ Dashboard uploaded: {dashboard_url}")
+    print(f"📧 Presigned URL (7 days): {presigned_url}")
+    
+    return presigned_url
 
 def send_email_with_dashboard(dashboard_url: str, portfolio_summary: str):
     """Send email with link to dashboard"""
@@ -84,42 +92,28 @@ def send_email_with_dashboard(dashboard_url: str, portfolio_summary: str):
     <html>
     <head>
         <style>
-            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-            .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px; }}
-            .content {{ padding: 20px; }}
-            .button {{ display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }}
-            .summary {{ background: #f5f5f5; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; }}
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px; }}
+            .summary {{ background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; white-space: pre-wrap; }}
+            .link {{ font-size: 16px; color: #667eea; }}
         </style>
     </head>
     <body>
-        <div class="header">
-            <h1>📊 Daily Portfolio Update</h1>
-            <p>{datetime.now().strftime('%B %d, %Y')}</p>
-        </div>
-        <div class="content">
-            <p>Your Buffett-style portfolio has been updated with the latest market data.</p>
-            
-            <a href="{dashboard_url}" class="button">📈 View Interactive Dashboard →</a>
-            
-            <h3>Quick Summary:</h3>
-            <div class="summary">{summary_text}</div>
-            
-            <p><small>Dashboard updates daily at 9 AM PT with live market data.</small></p>
-        </div>
+        <h2>📊 Portfolio Update - {datetime.now().strftime('%B %d, %Y')}</h2>
+        
+        <div class="summary">{summary_text}</div>
+        
+        <p class="link">
+            <a href="{dashboard_url}">View Interactive Dashboard →</a>
+        </p>
     </body>
     </html>
     """
     
-    text_body = f"""
-Daily Portfolio Update - {datetime.now().strftime('%B %d, %Y')}
+    text_body = f"""Portfolio Update - {datetime.now().strftime('%B %d, %Y')}
 
-View your interactive dashboard:
-{dashboard_url}
-
-Quick Summary:
 {summary_text}
 
-Dashboard updates daily at 9 AM PT with live market data.
+View Dashboard: {dashboard_url}
     """
     
     try:
@@ -127,7 +121,7 @@ Dashboard updates daily at 9 AM PT with live market data.
             Source=EMAIL_TO,
             Destination={'ToAddresses': [EMAIL_TO]},
             Message={
-                'Subject': {'Data': f'📊 Portfolio Update - {datetime.now().strftime("%b %d")}'},
+                'Subject': {'Data': f'Portfolio Update - {datetime.now().strftime("%b %d")}'},
                 'Body': {
                     'Text': {'Data': text_body},
                     'Html': {'Data': html_body}

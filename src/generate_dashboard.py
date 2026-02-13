@@ -11,8 +11,8 @@ import yfinance as yf
 import pandas as pd
 
 
-def fetch_performance_data(ticker: str, days: int = 30) -> dict:
-    """Get price history and calculate performance metrics"""
+def fetch_performance_data(ticker: str, days: int = 7) -> dict:
+    """Get price history and calculate performance metrics - reduced to 7 days for speed"""
     try:
         stock = yf.Ticker(ticker)
         hist = stock.history(period=f"{days}d")
@@ -35,8 +35,8 @@ def fetch_performance_data(ticker: str, days: int = 30) -> dict:
             'pe_ratio': info.get('trailingPE'),
             'market_cap': info.get('marketCap'),
             'dividend_yield': info.get('dividendYield', 0) * 100 if info.get('dividendYield') else 0,
-            'history': hist['Close'].tolist(),
-            'dates': [d.strftime('%Y-%m-%d') for d in hist.index]
+            'history': hist['Close'].tolist()[-7:],  # Only last 7 days
+            'dates': [d.strftime('%m/%d') for d in hist.index][-7:]  # Shorter date format
         }
     except Exception as e:
         print(f"Error fetching {ticker}: {e}")
@@ -44,7 +44,10 @@ def fetch_performance_data(ticker: str, days: int = 30) -> dict:
 
 
 def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
-    """Generate interactive dashboard with sleeve tabs"""
+    """Generate interactive dashboard with sleeve tabs and My Holdings tab"""
+    
+    # Import holdings
+    from my_holdings import MY_HOLDINGS, TOTAL_INVESTED
     
     # Read portfolio
     df = pd.read_csv(portfolio_csv)
@@ -52,10 +55,10 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
     # Group by sleeve
     sleeves = {}
     for _, row in df.iterrows():
-        sleeve = row.get('Sleeve', 'Other')
+        sleeve = row.get('sleeve', 'Other')
         if sleeve not in sleeves:
             sleeves[sleeve] = []
-        sleeves[sleeve].append(row['Ticker'])
+        sleeves[sleeve].append(row['ticker'])
     
     # Fetch performance for all holdings
     print("Fetching performance data...")
@@ -78,6 +81,8 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
     html = f"""<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio Dashboard - {datetime.now().strftime('%Y-%m-%d')}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -111,7 +116,12 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
         .metrics {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #334155; }}
         .metric {{ font-size: 12px; color: #94a3b8; }}
         .metric-value {{ font-size: 16px; color: #e2e8f0; font-weight: 600; }}
-        .chart-mini {{ height: 60px; margin-top: 15px; }}
+        .chart-mini {{ height: 80px; margin-top: 15px; position: relative; }}
+        
+        .time-selector {{ display: flex; gap: 5px; margin-top: 10px; justify-content: center; }}
+        .time-btn {{ background: #334155; color: #94a3b8; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }}
+        .time-btn:hover {{ background: #475569; }}
+        .time-btn.active {{ background: #667eea; color: white; }}
         
         .winner-badge {{ background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }}
         .loser-badge {{ background: #ef4444; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }}
@@ -130,7 +140,7 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
                 <div class="stat-value {'positive' if avg_change >= 0 else 'negative'}">
                     {'+' if avg_change >= 0 else ''}{avg_change:.2f}%
                 </div>
-                <div class="stat-label">30-Day Performance</div>
+                <div class="stat-label">7-Day Performance</div>
             </div>
             <div class="stat">
                 <div class="stat-value">{len([h for s in sleeve_data.values() for h in s])}</div>
@@ -142,17 +152,131 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
     <div class="tabs">
 """
     
-    # Generate tabs
+    # Generate tabs - My Holdings first, then sleeves
+    html += '        <div class="tab active" onclick="showSleeve(\'my-holdings\')">💼 My Holdings</div>\n'
     for i, sleeve in enumerate(sleeve_data.keys()):
-        active = 'active' if i == 0 else ''
-        html += f'        <div class="tab {active}" onclick="showSleeve(\'{sleeve}\')">{sleeve.replace("_", " ").title()}</div>\n'
+        html += f'        <div class="tab" onclick="showSleeve(\'{sleeve}\')">{sleeve.replace("_", " ").title()}</div>\n'
     
     html += '    </div>\n    <div class="content">\n'
     
+    # Generate My Holdings panel first
+    html += '        <div class="sleeve-panel active" id="my-holdings">\n'
+    html += '            <h2 style="margin-bottom: 20px; color: #667eea;">💼 My Actual Holdings</h2>\n'
+    
+    # Calculate total portfolio value and prepare pie chart data
+    my_holdings_data = []
+    account_totals = {}
+    account_cost_basis = {}
+    
+    for account, holdings in MY_HOLDINGS.items():
+        account_value = 0
+        account_cost = 0
+        for ticker, data in holdings.items():
+            quantity = data['quantity']
+            cost_basis = data['cost_basis']
+            perf = fetch_performance_data(ticker)
+            if perf:
+                value = perf['current_price'] * quantity
+                account_value += value
+                account_cost += cost_basis
+                my_holdings_data.append({
+                    'account': account,
+                    'ticker': ticker,
+                    'quantity': quantity,
+                    'cost_basis': cost_basis,
+                    'perf': perf,
+                    'value': value
+                })
+        account_totals[account] = account_value
+        account_cost_basis[account] = account_cost
+    
+    total_portfolio_value = sum(account_totals.values())
+    total_invested = sum(TOTAL_INVESTED.values())
+    total_gain = total_portfolio_value - total_invested
+    total_gain_pct = (total_gain / total_invested * 100) if total_invested > 0 else 0
+    gain_class = 'positive' if total_gain >= 0 else 'negative'
+    
+    # Add summary stats
+    html += f'''
+        <div class="metric-grid">
+            <div class="metric-card green">
+                <div class="metric-label">Current Value</div>
+                <div class="metric-value">${total_portfolio_value:,.2f}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Invested</div>
+                <div class="metric-value">${total_invested:,.2f}</div>
+            </div>
+            <div class="metric-card {gain_class}">
+                <div class="metric-label">Total Gain/Loss</div>
+                <div class="metric-value">${total_gain:+,.2f} ({total_gain_pct:+.2f}%)</div>
+            </div>
+        </div>
+        
+        <div style="max-width: 600px; margin: 30px auto;">
+            <canvas id="portfolio-pie-chart"></canvas>
+        </div>
+    '''
+    
+    for account in MY_HOLDINGS.keys():
+        acct_value = account_totals.get(account, 0)
+        acct_invested = TOTAL_INVESTED.get(account, 0)
+        acct_gain = acct_value - acct_invested
+        acct_gain_pct = (acct_gain / acct_invested * 100) if acct_invested > 0 else 0
+        html += f'            <h3 style="color: #94a3b8; margin: 30px 0 15px 0;">{account}: ${acct_value:,.2f} ({acct_gain:+,.2f} / {acct_gain_pct:+.2f}%)</h3>\n'
+        html += '            <div class="holdings-grid">\n'
+        
+        for holding in [h for h in my_holdings_data if h['account'] == account]:
+            perf = holding['perf']
+            quantity = holding['quantity']
+            value = holding['value']
+            cost_basis = holding['cost_basis']
+            gain = value - cost_basis
+            gain_pct = (gain / cost_basis * 100) if cost_basis > 0 else 0
+            change_class = 'positive' if perf['change_pct'] >= 0 else 'negative'
+            gain_class_holding = 'positive' if gain >= 0 else 'negative'
+            pe_display = f"{perf['pe_ratio']:.1f}" if perf['pe_ratio'] is not None else 'N/A'
+            mkt_cap_display = f"${perf['market_cap']/1e9:.1f}B" if perf['market_cap'] else 'N/A'
+            pct_of_portfolio = (value / total_portfolio_value * 100) if total_portfolio_value > 0 else 0
+            
+            html += f"""
+            <div class="holding-card">
+                <div class="holding-header">
+                    <div>
+                        <div class="ticker">{perf['ticker']}</div>
+                        <div class="name">{perf['name']}</div>
+                    </div>
+                    <div class="change {gain_class_holding}">
+                        ${gain:+,.2f} ({gain_pct:+.1f}%)
+                    </div>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">${value:,.2f}</div>
+                        <div>Current Value</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{quantity:.3f}</div>
+                        <div>Shares</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${perf['current_price']:.2f}</div>
+                        <div>Price</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">{pct_of_portfolio:.1f}%</div>
+                        <div>% of Total</div>
+                    </div>
+                </div>
+                <canvas id="chart-my-{perf['ticker']}-{account.replace(' ', '-')}" class="chart-mini"></canvas>
+            </div>
+"""
+        html += '            </div>\n'
+    html += '        </div>\n'
+    
     # Generate sleeve panels
     for i, (sleeve, holdings) in enumerate(sleeve_data.items()):
-        active = 'active' if i == 0 else ''
-        html += f'        <div class="sleeve-panel {active}" id="{sleeve}">\n'
+        html += f'        <div class="sleeve-panel" id="{sleeve}">\n'
         html += f'            <h2 style="margin-bottom: 20px; color: #667eea;">{sleeve.replace("_", " ").title()} ({len(holdings)} holdings)</h2>\n'
         html += '            <div class="holdings-grid">\n'
         
@@ -164,6 +288,9 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
                 badge = '<span class="loser-badge">📉 Needs Attention</span>'
             
             change_class = 'positive' if holding['change_pct'] >= 0 else 'negative'
+            pe_display = f"{holding['pe_ratio']:.1f}" if holding['pe_ratio'] is not None else 'N/A'
+            mkt_cap_display = f"${holding['market_cap']/1e9:.1f}B" if holding['market_cap'] else 'N/A'
+            change_display = f"{'+' if holding['change_pct'] >= 0 else ''}{holding['change_pct']:.2f}%"
             
             html += f"""
                 <div class="holding-card">
@@ -173,7 +300,7 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
                             <div class="name">{holding['name']}</div>
                         </div>
                         <div class="change {change_class}">
-                            {'+' if holding['change_pct'] >= 0 else ''}{holding['change_pct']:.2f}%
+                            {change_display} <small style="opacity:0.7">(7d)</small>
                         </div>
                     </div>
                     {badge}
@@ -183,7 +310,7 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
                             <div>Current Price</div>
                         </div>
                         <div class="metric">
-                            <div class="metric-value">{holding['pe_ratio']:.1f if holding['pe_ratio'] else 'N/A'}</div>
+                            <div class="metric-value">{pe_display}</div>
                             <div>P/E Ratio</div>
                         </div>
                         <div class="metric">
@@ -191,7 +318,7 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
                             <div>Dividend Yield</div>
                         </div>
                         <div class="metric">
-                            <div class="metric-value">${holding['market_cap']/1e9:.1f}B</div>
+                            <div class="metric-value">{mkt_cap_display}</div>
                             <div>Market Cap</div>
                         </div>
                     </div>
@@ -217,7 +344,109 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
         // Generate mini charts
 """
     
-    # Add chart data
+    # Add pie chart for portfolio allocation
+    pie_labels = []
+    pie_values = []
+    pie_colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#34495e', '#e67e22']
+    
+    for i, holding in enumerate(my_holdings_data):
+        pie_labels.append(f"{holding['ticker']} ({holding['account']})")
+        pie_values.append(holding['value'])
+    
+    html += f"""
+        new Chart(document.getElementById('portfolio-pie-chart'), {{
+            type: 'doughnut',
+            data: {{
+                labels: {json.dumps(pie_labels)},
+                datasets: [{{
+                    data: {json.dumps(pie_values)},
+                    backgroundColor: {json.dumps(pie_colors[:len(pie_labels)])}
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                plugins: {{
+                    legend: {{ position: 'right' }},
+                    title: {{ display: true, text: 'Portfolio Allocation', color: '#e2e8f0', font: {{ size: 18 }} }},
+                    tooltip: {{
+                        callbacks: {{
+                            label: function(context) {{
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return context.label + ': $' + value.toFixed(2) + ' (' + percentage + '%)';
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+        }});
+    
+    # Add chart data - My Holdings first
+    for holding in my_holdings_data:
+        perf = holding['perf']
+        account = holding['account'].replace(' ', '-')
+        dates_json = json.dumps(perf['dates'])
+        prices_json = json.dumps(perf['history'])
+        color = '#10b981' if perf['change_pct'] >= 0 else '#ef4444'
+        
+        html += f"""
+        new Chart(document.getElementById('chart-my-{perf['ticker']}-{account}'), {{
+            type: 'line',
+            data: {{
+                labels: {dates_json},
+                datasets: [{{
+                    data: {prices_json},
+                    borderColor: '{color}',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: '{color}',
+                    pointHoverBorderColor: 'white',
+                    pointHoverBorderWidth: 2
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 4,
+                plugins: {{ 
+                    legend: {{ display: false }},
+                    tooltip: {{
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: '{color}',
+                        borderWidth: 1,
+                        displayColors: false,
+                        callbacks: {{
+                            title: function(context) {{
+                                return context[0].label;
+                            }},
+                            label: function(context) {{
+                                return '$' + context.parsed.y.toFixed(2);
+                            }}
+                        }}
+                    }}
+                }},
+                scales: {{
+                    x: {{ display: false }},
+                    y: {{ display: false }}
+                }},
+                interaction: {{ 
+                    mode: 'index', 
+                    intersect: false 
+                }}
+            }}
+        }});
+"""
+    
+    # Add chart data for sleeves
     for sleeve, holdings in sleeve_data.items():
         for holding in holdings:
             dates_json = json.dumps(holding['dates'])
@@ -235,16 +464,46 @@ def generate_dashboard(portfolio_csv: str, output_html: str = 'dashboard.html'):
                     borderWidth: 2,
                     fill: false,
                     tension: 0.4,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: '{color}',
+                    pointHoverBorderColor: 'white',
+                    pointHoverBorderWidth: 2
                 }}]
             }},
             options: {{
                 responsive: true,
-                maintainAspectRatio: false,
-                plugins: {{ legend: {{ display: false }} }},
+                maintainAspectRatio: true,
+                aspectRatio: 4,
+                plugins: {{ 
+                    legend: {{ display: false }},
+                    tooltip: {{
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: '{color}',
+                        borderWidth: 1,
+                        displayColors: false,
+                        callbacks: {{
+                            title: function(context) {{
+                                return context[0].label;
+                            }},
+                            label: function(context) {{
+                                return '$' + context.parsed.y.toFixed(2);
+                            }}
+                        }}
+                    }}
+                }},
                 scales: {{
                     x: {{ display: false }},
                     y: {{ display: false }}
+                }},
+                interaction: {{ 
+                    mode: 'index', 
+                    intersect: false 
                 }}
             }}
         }});
